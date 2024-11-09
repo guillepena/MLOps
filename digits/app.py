@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
 # Load the trained model
-<TODO>
+clf = joblib.load("./digits_model")
 
 # Set up a directory to save uploaded images
 UPLOAD_FOLDER = 'static/uploads'
@@ -51,7 +51,7 @@ def predict_digit(image_path):
     img_data = np.array(img)  # Convert to array
     img_data = 16 - (img_data / 16)  # Inverse the color scale
     img_data = img_data.reshape(1, -1)  # Reshape for model input
-    prediction = <TODO>
+    prediction = clf.predict(img_data)
     return prediction[0]
 
 @app.route('/uploads/<filename>')
