@@ -4,11 +4,24 @@ from flask import Flask, request, render_template
 from PIL import Image
 import numpy as np
 import shutil
+import joblib
 
 app = Flask(__name__)
 
 # Load the models
-<TODO>
+def load_models(path):
+    models = {}
+    for filename in os.listdir(path):
+        if filename.endswith('.pkl'):
+            model_path = os.path.join(path, filename)
+            try:                    
+                model_name= os.path.splitext(filename)[0]
+                models[model_name] = joblib.load(model_path) 
+                print(f"Loaded model: {model_name}")
+            
+            except Exception as e:
+                print(f"Error loading {filename}: {e}")
+    return models
 
 
 def preprocess_image(image_path):
@@ -53,14 +66,22 @@ def upload_file():
         file.save(upload_path)
         shutil.copy(upload_path, static_path)
 
+        models = load_models("./models")
+
+        print(models.items())
+
         try:
             upper_half = preprocess_image(upload_path)
 
             # Make predictions and generate output images
             output_images = {}
             for name, model in models.items():
-                prediction = <TODO>
-                print(f"{name} prediction: {prediction}", flush=True)  # Debugging line
+                prediction = model.predict([upper_half])[0]
+                if "extra-trees" in name.lower() or "k-nn" in name.lower():
+                    prediction = (prediction * 255).astype('uint8')
+                else:
+                    prediction = np.clip(prediction, 0, 255).astype('uint8')
+                print(f"{name} prediction: {prediction}", flush=True)
 
                 output_images[name] = create_image_from_prediction(upper_half, prediction)
 
